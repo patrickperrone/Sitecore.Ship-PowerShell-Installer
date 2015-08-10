@@ -246,8 +246,8 @@ function Download-NuGetPackage([xml]$config, [string]$packageId, [string]$packag
                 $request.Method = "GET"  
                 $request.ContentType = "application/json"
 
-                $requestStream = $request.GetResponse().GetResponseStream()
-                $readStream = New-Object System.IO.StreamReader $requestStream
+                $responseStream = $request.GetResponse().GetResponseStream()
+                $readStream = New-Object System.IO.StreamReader $responseStream
                 $data = $readStream.ReadToEnd()
                 $readStream.Dispose();
                 $readStream.Close();
