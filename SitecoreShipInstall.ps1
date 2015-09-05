@@ -449,7 +449,7 @@ function Copy-NuGetPackageAssemblies([xml]$config, [string]$packagePath)
     Get-ChildItem $folderPath -Filter *.dll | `
     Foreach-Object{
         $content = $_.FullName
-        Write-Message $config "Copying $($_.Name) to \bin" "White"
+        Write-Message $config "Copying $($_.Name) to \bin folder" "White"
         Copy-Item $content $installPath
     }
 }
