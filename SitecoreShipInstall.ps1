@@ -671,11 +671,11 @@ function Install-SitecoreShip
         if (Get-ConfigOption $config "CleanTempFilesWhenDone")
         {
             Remove-Item $workingDir -Recurse
-
-            $stopWatch.Stop()
-            $message = "`nSitecore.Ship install finished - Elapsed time {0}.{1} seconds" -f $stopWatch.Elapsed.Seconds, $stopWatch.Elapsed.Milliseconds
-            Write-Message $config $message "Green"
         }
+        
+        $stopWatch.Stop()
+        $message = "`nSitecore.Ship install finished - Elapsed time {0}.{1} seconds" -f $stopWatch.Elapsed.Seconds, $stopWatch.Elapsed.Milliseconds
+        Write-Message $config $message "Green"
     }
 }
 
