@@ -1,3 +1,5 @@
+# Specify a path to the .config file if you do not wish to put the .config file in the same directory as the script
+$configPath = ""
 $scriptDir = Split-Path (Resolve-Path $myInvocation.MyCommand.Path)
 $workingDir = Join-Path $scriptDir -ChildPath "temp"
 
@@ -31,10 +33,25 @@ function Get-ConfigOption([xml]$config, [string]$optionName)
     return $optionValue
 }
 
-function Read-InstallConfigFile
+function Read-InstallConfigFile([string]$configPath)
 {
-    [xml]$config = Get-Content ($scriptDir + "\SitecoreShipInstall.config")
-    return $config
+    if ([string]::IsNullOrEmpty($configPath))
+    {
+        [xml]$configXml = Get-Content ($scriptDir + "\SitecoreShipInstall.config")
+    }
+    else
+    {
+        if (Test-Path $configPath)
+        {
+            [xml]$configXml = Get-Content ($configPath)
+        }
+        else
+        {
+            Write-Host "Could not find configuration file at specified path: $confgPath" -ForegroundColor Red
+        }
+    }
+
+    return $configXml
 }
 
 function Get-WebRequest([System.Xml.XmlElement]$nugetSource, [string]$packagePath)
@@ -629,11 +646,12 @@ function Install-AllNuGetPackages([xml]$config, [System.Collections.Generic.List
     Write-Message $config "Installation complete!" "White"
 }
 
-function Install-SitecoreShip
+function Install-SitecoreShip([string]$configPath)
 {
-    [xml]$config = Read-InstallConfigFile
+    [xml]$config = Read-InstallConfigFile $configPath
     if ($config -eq $null)
     {
+        Write-Host "Aborting install." -ForegroundColor Red
         return
     }
     
@@ -679,4 +697,4 @@ function Install-SitecoreShip
     }
 }
 
-Install-SitecoreShip
+Install-SitecoreShip $configPath
