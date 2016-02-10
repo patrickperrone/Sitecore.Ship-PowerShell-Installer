@@ -537,8 +537,6 @@ function New-ConfigTransform([xml]$config, [string]$sourceConfigPath, [string]$t
     $xml.configuration.packageInstallation.SetAttribute("muteAuthorisationFailureLogging", $muteAuthorisationFailureLoggingOption) | Out-Null
 
 
-
-
     # <nancyFx>
     $xml.configuration.nancyFx.SetAttribute("Transform", $xdt, "Insert") | Out-Null
     $elem = $xml.CreateElement("nancyFx")
@@ -547,6 +545,7 @@ function New-ConfigTransform([xml]$config, [string]$sourceConfigPath, [string]$t
     $xml.configuration.InsertAfter($elem, $xml.configuration.nancyFx) | Out-Null
 
     # <system.web>
+    $xml.configuration.'system.web'.httpHandlers.SetAttribute("Transform", $xdt, "InsertIfMissing") | Out-Null
     $xml.configuration.'system.web'.httpHandlers.add.SetAttribute("Transform", $xdt, "InsertIfMissing") | Out-Null
     $xml.configuration.'system.web'.httpHandlers.add.SetAttribute("Locator", $xdt, "Match(type,path)") | Out-Null
 
