@@ -417,9 +417,9 @@ function Get-DependentPackages([xml]$config, [string]$packagePath, [System.Colle
 {
     Write-Message $config "`nDownloading Dependent Package..." "Green"
 
-    $extractedPackage = Copy-NuGetPackageFiles $packagePath
+    [string]$extractedPackage = Copy-NuGetPackageFiles $packagePath
 
-    $packagesToDownload = Read-NuGetDependencies $extractedPackage
+    $packagesToDownload = Read-NuGetDependencies $extractedPackage.Trim()
 
     foreach ($pkg in $packagesToDownload.GetEnumerator())
     {
@@ -458,7 +458,13 @@ function Get-TransformPackage([xml]$config, [System.Collections.Generic.List[str
 function Copy-NuGetPackageAssemblies([xml]$config, [string]$packagePath)
 {
     $folderPath = Join-Path ([System.IO.Path]::GetDirectoryName($packagePath)) ([System.IO.Path]::GetFileNameWithoutExtension($packagePath))
-    $folderPath = Join-Path $folderPath -ChildPath "lib\net40"
+    $folderPath = Join-Path $folderPath -ChildPath "lib\net45"
+
+    if (!(Test-Path $folderPath))
+    {
+        $folderPath = Join-Path ([System.IO.Path]::GetDirectoryName($packagePath)) ([System.IO.Path]::GetFileNameWithoutExtension($packagePath))
+        $folderPath = Join-Path $folderPath -ChildPath "lib\net40"
+    }
 
     $installPath = $config.InstallSettings.SitecoreInstanceRoot.Trim()
     $installPath = Join-Path $installPath -ChildPath "bin"
