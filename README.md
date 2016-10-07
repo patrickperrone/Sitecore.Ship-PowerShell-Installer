@@ -18,8 +18,6 @@ This PowerShell script will install Sitecore.Ship onto a Sitecore instance from 
 2. Edit config file
 3. Run Powershell as Administrator and invoke ```.\SitecoreShipInstall.ps1```
 
-NOTE: I've included a development branch build of the .nupkg file from Sitecore.Ship for your convenience. This is the package I have tested my script against. Once this package is available on a public feed, I will remove it.
-
 ### Troubleshooting
 - If you see an error in PowerShell complaining that "the execution of scripts is disabled on this system." then you need to invoke ```Set-ExecutionPolicy -ExecutionPolicy unrestricted -Force```
 - If you receive a security warning after invoking ```.\SitecoreShipInstall.ps1``` and want to make it go away permanently, then right-click on the install.ps1 file and "Unblock" it.
