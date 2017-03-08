@@ -491,6 +491,9 @@ function Copy-ShipConfig([xml]$config, [string]$packagePath)
 
 function New-ConfigTransform([xml]$config, [string]$sourceConfigPath, [string]$transformPath)
 {
+    $packageId = $config.InstallSettings.'Sitecore.Ship'.PackageId.Trim().ToLower()
+    $isDependentOnNancy = $packageId -eq "sitecore.ship"
+    
     # Read the web.config.transform xml so we can modify it to use xdt directives
     [System.Xml.XmlDocument]$xml = Get-Content ($sourceConfigPath)
     $xdt = "http://schemas.microsoft.com/XML-Document-Transform"
@@ -526,7 +529,6 @@ function New-ConfigTransform([xml]$config, [string]$sourceConfigPath, [string]$t
         $xml.configuration.packageInstallation.AppendChild($whitelist) | Out-Null
     }
 
-
     [System.Xml.XmlElement]$elem = $xml.CreateElement("packageInstallation")
     $elem.SetAttribute("Transform", $xdt, "Remove") | Out-Null
     $elem.SetAttribute("Locator", $xdt, "XPath(/configuration/packageInstallation[2])") | Out-Null
@@ -542,13 +544,15 @@ function New-ConfigTransform([xml]$config, [string]$sourceConfigPath, [string]$t
     $muteAuthorisationFailureLoggingOption = (Get-ConfigOption $config "Sitecore.Ship/Options/MuteAuthorisationFailureLogging").ToString().ToLower()
     $xml.configuration.packageInstallation.SetAttribute("muteAuthorisationFailureLogging", $muteAuthorisationFailureLoggingOption) | Out-Null
 
-
     # <nancyFx>
-    $xml.configuration.nancyFx.SetAttribute("Transform", $xdt, "Insert") | Out-Null
-    $elem = $xml.CreateElement("nancyFx")
-    $elem.SetAttribute("Transform", $xdt, "Remove") | Out-Null
-    $elem.SetAttribute("Locator", $xdt, "XPath(/configuration/nancyFx[2])") | Out-Null
-    $xml.configuration.InsertAfter($elem, $xml.configuration.nancyFx) | Out-Null
+    if ($isDependentOnNancy)
+    {
+        $xml.configuration.nancyFx.SetAttribute("Transform", $xdt, "Insert") | Out-Null
+        $elem = $xml.CreateElement("nancyFx")
+        $elem.SetAttribute("Transform", $xdt, "Remove") | Out-Null
+        $elem.SetAttribute("Locator", $xdt, "XPath(/configuration/nancyFx[2])") | Out-Null
+        $xml.configuration.InsertAfter($elem, $xml.configuration.nancyFx) | Out-Null
+    }
 
     # <system.web>
     $xml.configuration.'system.web'.httpHandlers.SetAttribute("Transform", $xdt, "InsertIfMissing") | Out-Null
@@ -564,22 +568,25 @@ function New-ConfigTransform([xml]$config, [string]$sourceConfigPath, [string]$t
     $xml.configuration.'system.webServer'.handlers.add.SetAttribute("Locator", $xdt, "Match(name,type,path)") | Out-Null
 
     # <runtime>
-    $runtimeXml = [xml] @"
-    <runtime>
-        <assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">
-            <dependentAssembly foo="bar" />
-            <dependentAssembly>
-                <assemblyIdentity name="Antlr3.Runtime" publicKeyToken="eb42632606e9261f" />
-                <bindingRedirect oldVersion="0.0.0.0-3.5.0.0" newVersion="3.5.0.2" />
-            </dependentAssembly>
-        </assemblyBinding>
-    </runtime>
+    if ($isDependentOnNancy)
+    {
+        $runtimeXml = [xml] @"
+        <runtime>
+            <assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">
+                <dependentAssembly foo="bar" />
+                <dependentAssembly>
+                    <assemblyIdentity name="Antlr3.Runtime" publicKeyToken="eb42632606e9261f" />
+                    <bindingRedirect oldVersion="0.0.0.0-3.5.0.0" newVersion="3.5.0.2" />
+                </dependentAssembly>
+            </assemblyBinding>
+        </runtime>
 "@
-    $xml.configuration.AppendChild($xml.ImportNode(($runtimeXml.runtime), $true)) | Out-Null
-    $xml.configuration.runtime.assemblyBinding.dependentAssembly[0].SetAttribute("Transform", $xdt, "Remove") | Out-Null
-    $xml.configuration.runtime.assemblyBinding.dependentAssembly[0].SetAttribute("Locator", $xdt, "Condition(./_defaultNamespace:assemblyIdentity/@name='Antlr3.Runtime')") | Out-Null
-    $xml.configuration.runtime.assemblyBinding.dependentAssembly[0].RemoveAttribute("foo")
-    $xml.configuration.runtime.assemblyBinding.dependentAssembly[1].SetAttribute("Transform", $xdt, "Insert") | Out-Null
+        $xml.configuration.AppendChild($xml.ImportNode(($runtimeXml.runtime), $true)) | Out-Null
+        $xml.configuration.runtime.assemblyBinding.dependentAssembly[0].SetAttribute("Transform", $xdt, "Remove") | Out-Null
+        $xml.configuration.runtime.assemblyBinding.dependentAssembly[0].SetAttribute("Locator", $xdt, "Condition(./_defaultNamespace:assemblyIdentity/@name='Antlr3.Runtime')") | Out-Null
+        $xml.configuration.runtime.assemblyBinding.dependentAssembly[0].RemoveAttribute("foo")
+        $xml.configuration.runtime.assemblyBinding.dependentAssembly[1].SetAttribute("Transform", $xdt, "Insert") | Out-Null
+    }
 
     # Save changes
     $xml.Save($transformPath);
