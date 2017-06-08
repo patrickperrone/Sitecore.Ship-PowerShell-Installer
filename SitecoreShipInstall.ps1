@@ -673,7 +673,7 @@ function Install-SitecoreShip([string]$configPath)
     $configIsValid = Confirm-ConfigurationSettings $config
     if (!$configIsValid)
     {
-        Write-Message $config "Aborting install: SitecoreShipInstall.xml file has a bad setting." "Red"
+        Write-Message $config "Aborting install: SitecoreShipInstall.config file has a bad setting." "Red"
         return
     }
 
